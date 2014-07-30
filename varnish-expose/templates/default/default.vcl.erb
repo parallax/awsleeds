@@ -1,4 +1,4 @@
-<% node[:opsworks][:layers]['expose-web-servers'][:instances].each do |name,attributes| -%>
+<% node[:opsworks][:layers]['rails-app'][:instances].each do |name,attributes| -%>
     backend <%= name %> {
     	.host = "<%= attributes["private_ip"] %>";
     	.port = "80";
@@ -16,7 +16,7 @@
 <% end -%>
 
 director default random {
-    <% node[:opsworks][:layers]['expose-web-servers'][:instances].each do |name,attributes| -%>
+    <% node[:opsworks][:layers]['rails-app'][:instances].each do |name,attributes| -%>
     	{ .backend = <%= name %>; .weight = 1; }
     <% end -%>
 }
