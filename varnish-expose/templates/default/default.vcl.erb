@@ -1,0 +1,37 @@
+<% node[:opsworks][:layers]['expose-web-servers'][:instances].each do |name,attributes| -%>
+    backend <%= name %> {
+    	.host = "<%= attributes["private_ip"] %>";
+    	.port = "80";
+    	.connect_timeout = 10s;
+  		.first_byte_timeout = 100s;
+  		.between_bytes_timeout = 100s;
+  		.probe = {
+        	.url = "/tmp.txt";
+        	.timeout = 10s;
+        	.interval = 5s;
+        	.window = 10;
+        	.threshold = 8;
+  		}
+	}
+<% end -%>
+
+director default random {
+    <% node[:opsworks][:layers]['expose-web-servers'][:instances].each do |name,attributes| -%>
+    	{ .backend = <%= name %>; .weight = 1; }
+    <% end -%>
+}
+
+
+sub vcl_recv {
+	set req.backend = default;
+	# public web site, ignore client request for fresh content, remove cookies
+	unset req.http.Cache-Control;
+	unset req.http.Pragma;
+	unset req.http.Cookie;
+}
+
+
+sub vcl_fetch {
+	# public web site, not allowed to set cookies
+	unset beresp.http.Set-Cookie;
+}
